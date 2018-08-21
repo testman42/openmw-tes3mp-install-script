@@ -136,9 +136,14 @@ function check_for_first_run() {
         [[ $DEBUG ]] && echo "Reading data from existing config file."
         source "$SCRIPT_DIR/$CONFIG_NAME" 
     fi
+
+}
+
+# check if anything was installed, otherwise set wizard to run after frist installation happens
+function check_for_existing_installations() {
     if [[ ! $OPENMW_INSTALLED ]] && [[ ! $TES3MP_INSTALLED ]]; then
-        [[ $DEBUG ]] && echo "Nothing installed yet, acting as if script is running for the first time."
-        FIRST_RUN=true
+        [[ $DEBUG ]] && echo "Nothing installed yet, will run import wizard"
+        RUN_WIAZRD=true
     fi
 }
 
@@ -325,6 +330,8 @@ function install_openmw() {
     # Provided filename structure stays the same. It did so far, so it's nothing to worry about.
     OPENMW_INSTALLED_VERSION="openmw-"$(echo $OPENMW_DOWNLOAD_FILENAME | cut -d \- -f 2)
     write_config_file
+    [[ $RUN_WIAZRD ]] && run_openmw_wizard
+    unset RUN_WIAZRD
 }
 
 function install_tes3mp() {
@@ -346,6 +353,8 @@ function install_tes3mp() {
     # URL is easier to parse than the filename
     TES3MP_INSTALLED_VERSION="tes3mp-"$(echo $TES3MP_DOWNLOAD_URL | cut -d \- -f 3 | cut -d \/ -f 1)
     write_config_file
+    [[ $RUN_WIAZRD ]] && run_openmw_wizard
+    unset RUN_WIAZRD
 }
 
 function install_openmw_nightly() {
@@ -403,10 +412,10 @@ function run_tes3mp_browser() {
 
 # Main part of the script 
 check_for_first_run
+check_for_existing_installations
 if [[ $FIRST_RUN ]]; then
     show_install_dialog
     install_dialog_selection_handler
-    [[ $OPENMW_INSTALLED ]] || [[ $TES3MP_INSTALLED ]] && run_openmw_wizard
 fi
 
 # Main loop is now actually loop because recursion was getting way too funky to handle
